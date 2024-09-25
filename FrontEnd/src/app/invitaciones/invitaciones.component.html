@@ -1,0 +1,111 @@
+<mat-card class="example-card" appearance="outlined">
+    <mat-card-header class="header-container">
+        <div mat-card-avatar class="example-header-image"></div>
+        <div class="title-container">
+          <mat-card-title>Lista de invitados</mat-card-title>
+          <mat-card-subtitle class="right-align">Invitados confirmados: 12 de 99</mat-card-subtitle>
+          <mat-card-subtitle class="right-align"># Invitados que asistirán: 12 de 120</mat-card-subtitle>
+        </div>
+      </mat-card-header>
+    <!-- <img mat-card-image src="https://material.angular.io/assets/img/examples/shiba2.jpg" alt="Photo of a Shiba Inu"> -->
+    <mat-card-content>
+        <form>
+            <div class="mb-3 row">
+                <label for="table-filtering-search" class="col-xs-3 col-sm-auto col-form-label">Buscar:</label>
+                <div class="col-xs-3 col-sm-auto">
+                    <input id="table-filtering-search" class="form-control" type="text" [formControl]="filter" />
+                </div>
+            </div>
+        </form>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">No. Invitados</th>
+                    <th scope="col">No. Confirmados</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (invitado of invitados$ | async; track invitado.Nombre; let i = $index) {
+                    <tr>
+                        <th scope="row">{{ invitado.ID }}</th>
+                        <td>
+                            <!-- <img
+                                [src]="'https://upload.wikimedia.org/wikipedia/commons/' + country.flag"
+                                [alt]="'The flag of ' + country.name"
+                                class="me-2"
+                                style="width: 20px"
+                            /> -->
+                            <ngb-highlight [result]="invitado.Nombre" [term]="filter.value" />
+                        </td>
+                        <td>
+                            <ngb-highlight 
+                                [result]="invitado.TotalInvitados | number" 
+                                [term]="filter.value"></ngb-highlight> 
+                            ({{ invitado.InvitadosAdultos }} Adultos, {{ invitado.InvitadosMenores }} Niños)
+                        </td>
+                        <td>
+                            <ngb-highlight 
+                                [result]="invitado.TotalInvitadosConfirmados | number" 
+                                [term]="filter.value"></ngb-highlight> 
+                            ({{ invitado.InvitadosAdultosConfirmados }} Adultos, {{ invitado.InvitadosMenoresConfirmados }} Niños)
+                        </td>
+                        <td><ngb-highlight [result]="invitado.Estado" [term]="filter.value" /></td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"> <i class="fa fa-trash"> </i></button>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Link de invitación" ><i class="fa fa-link"> </i></button>
+                        </td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td colspan="4" style="text-align: center">No se encontraron conincidencias</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </mat-card-content>
+    <mat-card-actions>
+        <button type="button" class="btn btn-success" (click)="open(content)">Nuevo invitado</button>
+    </mat-card-actions>
+</mat-card>
+
+<ng-template #content let-modal>
+	<div class="modal-header">
+		<h4 class="modal-title" id="modal-basic-title">Nuevo invitado</h4>
+		<button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+	</div>
+	<div class="modal-body">
+		<form>
+			<!-- <div class="mb-3">
+				<label for="dateOfBirth">Date of birth</label>
+				<div class="input-group">
+					<input
+						id="dateOfBirth"
+						class="form-control"
+						placeholder="yyyy-mm-dd"
+						name="dp"
+						ngbDatepicker
+						#dp="ngbDatepicker"
+					/>
+					<button class="btn btn-outline-secondary bi bi-calendar3" (click)="dp.toggle()" type="button"></button>
+				</div>
+			</div> -->
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1">Nombre</span>
+                <input type="text" class="form-control" placeholder="Nombre" aria-label="Nombre" aria-describedby="basic-addon1">
+            </div>
+            <div class="input-group mb-3">
+                <span class="input-group-text">Adultos</span>
+                <input type="number" class="form-control" placeholder="# Adultos" aria-label="Adultos">
+                <span class="input-group-text">Niños</span>
+                <input type="number" class="form-control" placeholder="# Niños" aria-label="Niños">
+              </div>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<button type="button" class="btn btn-outline-secondary" (click)="modal.close('Save click')">Save</button>
+	</div>
+</ng-template>
