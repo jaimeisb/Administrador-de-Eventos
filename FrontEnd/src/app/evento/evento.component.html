@@ -1,1 +1,33 @@
-<p>evento works!</p>
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <input type="text" readonly class="form-control-plaintext texto-propiedad" id="lblfecha" value="Fecha del evento">
+        </div>
+        <div class="col-md-5">
+            <input type="text" class="form-control" id="fecha" [(ngModel)]="fechaFormateada " disabled>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <input type="text" readonly class="form-control-plaintext texto-propiedad" id="lblCorreo" value="Correo para notificaciones">
+        </div>
+        <div class="col-9 col-md-5">
+            <input type="text" class="form-control" id="correo" [(ngModel)]="Evento.correo" maxlength="499">
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <input type="text" readonly class="form-control-plaintext texto-propiedad" id="lblMensajeInvitacion" value="Mensaje invitacion">
+        </div>
+        <div class="col-9 col-md-5">
+            <input type="text" multiple class="form-control" id="MensajeInvitacion" [(ngModel)]="Evento.mensajeInvitacion" maxlength="999">
+        </div>
+    </div>
+    <div  class="row mb-3">
+        <div class="col-4 mx-auto text-end">
+            <button type="button" class="btn btn-success" (click)="ActualizarEvento()">Guardar datos</button>
+        </div>
+    </div>
+</div>

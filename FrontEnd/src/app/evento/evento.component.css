@@ -1,0 +1,9 @@
+.texto-propiedad{
+    text-align: end;
+}
+@media (max-width: 768px) {
+    .texto-propiedad {
+        text-align: start;
+    }
+    
+  }

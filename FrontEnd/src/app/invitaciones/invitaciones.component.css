@@ -14,4 +14,10 @@
   .right-align {
     text-align: right;
   }
-  
+  /* toast.component.css */
+.ngb-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1200; /* Asegúrate de que se muestre encima de otros elementos */
+}

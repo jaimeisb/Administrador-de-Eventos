@@ -1,0 +1,8 @@
+﻿Generar modelo completo
+Scaffold-DbContext "Server=localhost;Database=AdminEventos;User Id=sa;Password=ismael;Trust Server Certificate=true;Trusted_Connection=SSPI;MultipleActiveResultSets=true;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Modelo
+
+Para tablas especificas:
+Scaffold-DbContext "Server=localhost;Database=AdminEventos;User Id=sa;Password=ismael;Trust Server Certificate=true;Trusted_Connection=SSPI;MultipleActiveResultSets=true;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Modelo -Tables EVENTO -Force
+
+Si ya tienes modelos generados y quieres actualizar solo nuevos cambios sin sobrescribir lo existente, puedes usar el parámetro -Force con precaución:
+Scaffold-DbContext "ConnectionString" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Modelo -Force

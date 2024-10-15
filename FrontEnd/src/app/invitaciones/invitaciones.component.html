@@ -3,17 +3,18 @@
         <div mat-card-avatar class="example-header-image"></div>
         <div class="title-container">
           <mat-card-title>Lista de invitados</mat-card-title>
-          <mat-card-subtitle class="right-align">Invitados confirmados: 12 de 99</mat-card-subtitle>
-          <mat-card-subtitle class="right-align"># Invitados que asistirán: 12 de 120</mat-card-subtitle>
+          <mat-card-subtitle class="right-align">Invitaciones confirmadas: {{ totalConfirmados }}, sin confirmar: {{ totalSinConfirmar }}</mat-card-subtitle>
+          <mat-card-subtitle class="right-align">Adultos que asistirán: {{totalAdultos$}}</mat-card-subtitle>
+          <mat-card-subtitle class="right-align">Niños que asistirán: {{totalAdultos$}}</mat-card-subtitle>
         </div>
       </mat-card-header>
-    <!-- <img mat-card-image src="https://material.angular.io/assets/img/examples/shiba2.jpg" alt="Photo of a Shiba Inu"> -->
     <mat-card-content>
         <form>
             <div class="mb-3 row">
                 <label for="table-filtering-search" class="col-xs-3 col-sm-auto col-form-label">Buscar:</label>
                 <div class="col-xs-3 col-sm-auto">
-                    <input id="table-filtering-search" class="form-control" type="text" [formControl]="filter" />
+                    <input id="table-filtering-search" class="form-control" type="text" [formControl]="filter" 
+                    (keydown)="onKeydown($event)" />
                 </div>
             </div>
         </form>
@@ -29,39 +30,34 @@
                 </tr>
             </thead>
             <tbody>
-                @for (invitado of invitados$ | async; track invitado.Nombre; let i = $index) {
+                @for (invitado of filteredInvitados$ | async; track invitado.nombre; let i = $index) {
                     <tr>
-                        <th scope="row">{{ invitado.ID }}</th>
+                        <th scope="row">{{ invitado.idInvitacion }}</th>
                         <td>
-                            <!-- <img
-                                [src]="'https://upload.wikimedia.org/wikipedia/commons/' + country.flag"
-                                [alt]="'The flag of ' + country.name"
-                                class="me-2"
-                                style="width: 20px"
-                            /> -->
-                            <ngb-highlight [result]="invitado.Nombre" [term]="filter.value" />
+                            <ngb-highlight [result]="invitado.nombre" [term]="filter.value" />
                         </td>
                         <td>
                             <ngb-highlight 
-                                [result]="invitado.TotalInvitados | number" 
+                                [result]="(invitado.adultos + invitado.menores) | number" 
                                 [term]="filter.value"></ngb-highlight> 
-                            ({{ invitado.InvitadosAdultos }} Adultos, {{ invitado.InvitadosMenores }} Niños)
+                            ({{ invitado.adultos }} Adultos, {{ invitado.menores }} Niños)
                         </td>
                         <td>
                             <ngb-highlight 
-                                [result]="invitado.TotalInvitadosConfirmados | number" 
-                                [term]="filter.value"></ngb-highlight> 
-                            ({{ invitado.InvitadosAdultosConfirmados }} Adultos, {{ invitado.InvitadosMenoresConfirmados }} Niños)
+                            [result]="invitado.estado | estadoDescriptivo: invitado.fechaExpiracion" 
+                            [term]="filter.value"></ngb-highlight> 
+                            ({{ invitado.invitacionConfirmacion?.adultosConfirmados ?? 0}} Adultos, {{ invitado.invitacionConfirmacion?.menoresConfirmados ?? 0}} Niños)
                         </td>
-                        <td><ngb-highlight [result]="invitado.Estado" [term]="filter.value" /></td>
+                        <td><ngb-highlight [result]="invitado.estado == 'P'? getFechaLocalString(invitado.fechaExpiracion) < getFechaLocal()? 'Expirada':'Pendiente': 'Confirmada' " [term]="filter.value" /></td>
                         <td>
-                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"> <i class="fa fa-trash"> </i></button>
-                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Link de invitación" ><i class="fa fa-link"> </i></button>
+                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Editar" (click)="editarInvitacion(invitado.idInvitacion)"> <i class="fa fa-pencil"> </i></button>
+                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar" (click)="eliminarInvitacion(invitado.idInvitacion)"> <i class="fa fa-trash"> </i></button>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Link de invitación" (click)="GetLinkInvitacion(invitado.idInvitacion)" ><i class="fa fa-link"> </i></button>
                         </td>
                     </tr>
                 } @empty {
                     <tr>
-                        <td colspan="4" style="text-align: center">No se encontraron conincidencias</td>
+                        <td colspan="4" style="text-align: center">No se encontraron coincidencias</td>
                     </tr>
                 }
             </tbody>
@@ -78,34 +74,88 @@
 		<button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
 	</div>
 	<div class="modal-body">
-		<form>
-			<!-- <div class="mb-3">
-				<label for="dateOfBirth">Date of birth</label>
-				<div class="input-group">
-					<input
-						id="dateOfBirth"
-						class="form-control"
-						placeholder="yyyy-mm-dd"
-						name="dp"
-						ngbDatepicker
-						#dp="ngbDatepicker"
-					/>
-					<button class="btn btn-outline-secondary bi bi-calendar3" (click)="dp.toggle()" type="button"></button>
-				</div>
-			</div> -->
+		<form [formGroup]="invitacionForm">
             <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1">Nombre</span>
-                <input type="text" class="form-control" placeholder="Nombre" aria-label="Nombre" aria-describedby="basic-addon1">
+              <span class="input-group-text">Nombre</span>
+              <input formControlName="Nombre" type="text" class="form-control" placeholder="Nombre" maxlength="499"/>
             </div>
             <div class="input-group mb-3">
-                <span class="input-group-text">Adultos</span>
-                <input type="number" class="form-control" placeholder="# Adultos" aria-label="Adultos">
-                <span class="input-group-text">Niños</span>
-                <input type="number" class="form-control" placeholder="# Niños" aria-label="Niños">
-              </div>
-		</form>
+              <span class="input-group-text">Fecha de expiración</span>
+              <input formControlName="FechaExpiracion" type="datetime-local" class="form-control" />
+            </div>
+            <div class="input-group mb-3">
+              <span class="input-group-text">Adultos</span>
+              <input formControlName="Adultos" type="number" class="form-control" placeholder="# Adultos" />
+              <span class="input-group-text">Niños</span>
+              <input formControlName="Menores" type="number" class="form-control" placeholder="# Niños" />
+            </div>
+          </form>
 	</div>
 	<div class="modal-footer">
-		<button type="button" class="btn btn-outline-secondary" (click)="modal.close('Save click')">Save</button>
+		<button type="button" class="btn btn-outline-secondary" (click)="crearInvitacion()">Guardar</button>
 	</div>
 </ng-template>
+
+
+
+
+<div class="modal fade" id="editModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar invitación</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="container-fluid">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <input type="text" readonly class="form-control-plaintext texto-propiedad" id="lblfecha" value="ID invitación">
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" id="idInvitacion" [(ngModel)]="invitacionXEditar.idInvitacion" disabled>
+                    </div>
+                </div>
+            
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <input type="text" readonly class="form-control-plaintext texto-propiedad" id="lblNombre" value="Nombre">
+                    </div>
+                    <div class="col-9 col-md-5">
+                        <input type="text" class="form-control" id="Nombre" [(ngModel)]="invitacionXEditar.nombre" maxlength="499">
+                    </div>
+                </div>
+            
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <input type="text" readonly class="form-control-plaintext texto-propiedad" id="lblfecha" value="Fecha de expiración">
+                    </div>
+                    <div class="col-9 col-md-5">
+                        <input type="datetime-local" multiple class="form-control" id="fecha" [(ngModel)]="invitacionXEditar.fechaExpiracion">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <input type="text" readonly class="form-control-plaintext texto-propiedad" id="lblAdultos" value="No. Adultos">
+                    </div>
+                    <div class="col-9 col-md-5">
+                        <input type="number" multiple class="form-control" id="Adultos" [(ngModel)]="invitacionXEditar.adultos" min="0">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <input type="text" readonly class="form-control-plaintext texto-propiedad" id="lblNinos" value="No. Niños">
+                    </div>
+                    <div class="col-9 col-md-5">
+                        <input type="number" multiple class="form-control" id="Ninos" [(ngModel)]="invitacionXEditar.menores" min="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="ActualizarInvitacion()">Guardar cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
