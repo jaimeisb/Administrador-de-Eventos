@@ -19,6 +19,8 @@ public partial class Invitacion
 
     public string? Estado { get; set; }
 
+    public string? Telefono { get; set; }
+
     public virtual Evento? IdEventoNavigation { get; set; }
 
     public virtual InvitacionConfirmacion? InvitacionConfirmacion { get; set; }

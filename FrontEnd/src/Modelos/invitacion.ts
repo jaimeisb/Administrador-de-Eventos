@@ -7,6 +7,7 @@ export interface Invitacion {
     fechaExpiracion: Date;
     estado: string;
     invitacionConfirmacion: invitacionConfirmacion|null;
+    telefono:string;
   }
   
   export interface invitacionConfirmacion{

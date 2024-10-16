@@ -5,7 +5,7 @@
           <mat-card-title>Lista de invitados</mat-card-title>
           <mat-card-subtitle class="right-align">Invitaciones confirmadas: {{ totalConfirmados }}, sin confirmar: {{ totalSinConfirmar }}</mat-card-subtitle>
           <mat-card-subtitle class="right-align">Adultos que asistirán: {{totalAdultos$}}</mat-card-subtitle>
-          <mat-card-subtitle class="right-align">Niños que asistirán: {{totalAdultos$}}</mat-card-subtitle>
+          <mat-card-subtitle class="right-align">Niños que asistirán: {{totalMenores$}}</mat-card-subtitle>
         </div>
       </mat-card-header>
     <mat-card-content>
@@ -25,6 +25,7 @@
                     <th scope="col">Nombre</th>
                     <th scope="col">No. Invitados</th>
                     <th scope="col">No. Confirmados</th>
+                    <th scope="col">Teléfono</th>
                     <th scope="col">Estado</th>
                     <th scope="col">Acciones</th>
                 </tr>
@@ -48,11 +49,14 @@
                             [term]="filter.value"></ngb-highlight> 
                             ({{ invitado.invitacionConfirmacion?.adultosConfirmados ?? 0}} Adultos, {{ invitado.invitacionConfirmacion?.menoresConfirmados ?? 0}} Niños)
                         </td>
+                        <td>
+                            <ngb-highlight [result]="invitado.telefono" [term]="filter.value" />
+                        </td>
                         <td><ngb-highlight [result]="invitado.estado == 'P'? getFechaLocalString(invitado.fechaExpiracion) < getFechaLocal()? 'Expirada':'Pendiente': 'Confirmada' " [term]="filter.value" /></td>
                         <td>
                             <button type="button" class="btn btn-success btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Editar" (click)="editarInvitacion(invitado.idInvitacion)"> <i class="fa fa-pencil"> </i></button>
                             <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar" (click)="eliminarInvitacion(invitado.idInvitacion)"> <i class="fa fa-trash"> </i></button>
-                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Link de invitación" (click)="GetLinkInvitacion(invitado.idInvitacion)" ><i class="fa fa-link"> </i></button>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Link de invitación" (click)="GetLinkInvitacion(invitado.idInvitacion,invitado.telefono)" ><i class="fa fa-link"> </i></button>
                         </td>
                     </tr>
                 } @empty {
@@ -89,6 +93,10 @@
               <span class="input-group-text">Niños</span>
               <input formControlName="Menores" type="number" class="form-control" placeholder="# Niños" />
             </div>
+            <div class="input-group mb-3">
+              <span class="input-group-text">Teléfono</span>
+              <input formControlName="Telefono" type="text" class="form-control" />
+            </div>
           </form>
 	</div>
 	<div class="modal-footer">
@@ -104,7 +112,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Editar invitación</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close" (click)="CerrarModal()" aria-label="Close"></button>
         </div>
         <div class="modal-body">
             <div class="container-fluid">
@@ -125,7 +133,14 @@
                         <input type="text" class="form-control" id="Nombre" [(ngModel)]="invitacionXEditar.nombre" maxlength="499">
                     </div>
                 </div>
-            
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <input type="text" readonly class="form-control-plaintext texto-propiedad" id="lblTelefono" value="Teléfono">
+                    </div>
+                    <div class="col-9 col-md-5">
+                        <input type="text" class="form-control" id="Telefono" [(ngModel)]="invitacionXEditar.telefono" maxlength="24">
+                    </div>
+                </div>
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <input type="text" readonly class="form-control-plaintext texto-propiedad" id="lblfecha" value="Fecha de expiración">
@@ -153,9 +168,15 @@
             </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-secondary" (click)="CerrarModal()">Cancelar</button>
           <button type="button" class="btn btn-primary" (click)="ActualizarInvitacion()">Guardar cambios</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="overlay">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
     </div>
   </div>

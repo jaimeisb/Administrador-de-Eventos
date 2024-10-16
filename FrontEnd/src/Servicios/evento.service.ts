@@ -8,7 +8,8 @@ import { Evento } from '../Modelos/invitacion';
   providedIn: 'root'
 })
 export class EventoService {
-    private apiUrl = 'https://localhost:7080/api/Evento';  // URL base de la API
+    private apiUrl = 'https://apiadmineventos.solutionsjw.com/api/Evento';  // URL base de la API
+    //private apiUrl = 'https://localhost:7080/api/Evento';  
     constructor(private http: HttpClient) { }
 
     // Método para obtener un evento por ID
@@ -19,6 +20,7 @@ export class EventoService {
 
      // Método para obtener un evento por ID
      AddCorreoEvento(id: number, evento:Evento): Observable<void> {
+        console.log(evento);
         const url = `${this.apiUrl}/${id}`;
         return this.http.put<void>(url, evento, {
             headers: new HttpHeaders({
