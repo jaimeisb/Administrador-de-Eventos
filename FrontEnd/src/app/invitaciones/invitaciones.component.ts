@@ -1,16 +1,16 @@
-import { Component, PipeTransform, inject, TemplateRef } from '@angular/core';
-import { AsyncPipe, DecimalPipe } from '@angular/common';
+import { Component, inject, TemplateRef } from '@angular/core';
+import { AsyncPipe, CommonModule, DecimalPipe } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { ModalDismissReasons, NgbDatepickerModule, NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 import { Observable } from 'rxjs';
-import { map, startWith, switchMap } from 'rxjs/operators';
+import { finalize, map, startWith, switchMap } from 'rxjs/operators';
 import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
 import { InvitacionService } from '../../Servicios/invitacion.service';
 
 import { HttpClientModule } from '@angular/common/http';
-import { Invitacion } from '../../Modelos/invitacion';
+import { Evento, Invitacion } from '../../Modelos/invitacion';
 import { Clipboard,ClipboardModule  } from '@angular/cdk/clipboard';
 
 import {
@@ -19,16 +19,17 @@ import {
 import { Alerta } from '../Alertas/Alerta.component';
 import { EstadoDescriptivoPipe } from '../../Modelos/estado-descriptivo.pipe';
 import { Modal } from 'bootstrap';
+import { EventoService } from '../../Servicios/evento.service';
 
 
 
 @Component({
   selector: 'app-invitaciones',
   standalone: true,
-  imports: [FormsModule, MatCardModule, DecimalPipe, AsyncPipe, ReactiveFormsModule, NgbHighlight, NgbDatepickerModule, HttpClientModule, NgbTooltipModule, ClipboardModule, EstadoDescriptivoPipe ],
+  imports: [FormsModule, CommonModule, MatCardModule, DecimalPipe, AsyncPipe, ReactiveFormsModule, NgbHighlight, NgbDatepickerModule, HttpClientModule, NgbTooltipModule, ClipboardModule, EstadoDescriptivoPipe ],
   templateUrl: './invitaciones.component.html',
   styleUrl: './invitaciones.component.css',
-	providers: [DecimalPipe, InvitacionService],
+	providers: [DecimalPipe, InvitacionService, EventoService],
 })
 
 export class InvitacionesComponent {
@@ -49,9 +50,12 @@ export class InvitacionesComponent {
   durationInSeconds = 5;
 
   invitacionXEditar:Invitacion;
+  isLoading: boolean = false; // Controla la visibilidad del spinner
+  Evento:Evento;
 
-	constructor(private invitacionService: InvitacionService,private fb: FormBuilder, private clipboard: Clipboard) {
-    this.invitacionXEditar={idInvitacion:0, adultos:0, estado:'',fechaExpiracion:new Date,idEvento:0,menores:0,nombre:'',invitacionConfirmacion: null }
+	constructor(private invitacionService: InvitacionService,private fb: FormBuilder, private clipboard: Clipboard, private eventoService: EventoService) {
+    this.Evento = {correo:'',anfitrion:'',fecha:'',idEvento:0,mensajeInvitacion:''}
+    this.invitacionXEditar={idInvitacion:0, adultos:0, estado:'',fechaExpiracion:new Date,idEvento:0,menores:0,nombre:'',invitacionConfirmacion: null,telefono:'' }
     this.getInvitaciones();  // Llama al método para obtener las invitaciones
 		// Filtrar los invitados en base al input
     this.filteredInvitados$ = this.filter.valueChanges.pipe(
@@ -65,7 +69,20 @@ export class InvitacionesComponent {
       FechaExpiracion: [''],
       Adultos: [0, [Validators.required, Validators.min(1)]],
       Menores: [0],
-      Estado:['P']
+      Estado:['P'],
+      Telefono:['']
+    });
+
+    this.eventoService.getEvento(2).subscribe({
+      next: (data) => {
+        console.log(data);
+        // Puedes realizar alguna transformación aquí si es necesario
+        this.Evento = data;
+      },
+      complete: () => {
+        // Acciones cuando la suscripción se completa
+        this.isLoading = false; 
+      }
     });
 	}
 
@@ -107,6 +124,7 @@ export class InvitacionesComponent {
 
   // Método para obtener las invitaciones desde la API
   getInvitaciones(): void {
+    this.isLoading = true; // Mostrar el spinner
     this.invitados$ = this.invitacionService.getInvitaciones(2).pipe(
       map((data) => {
         
@@ -118,6 +136,8 @@ export class InvitacionesComponent {
         console.log(data);
         // Puedes realizar alguna transformación aquí si es necesario
         return data;
+      }),finalize(() => {
+        this.isLoading = false; // Ocultar el spinner al completar la carga
       })
     );
     this.filteredInvitados$ = this.filter.valueChanges.pipe(
@@ -140,7 +160,8 @@ export class InvitacionesComponent {
             FechaExpiracion: this.getFechaLocal(),
             Adultos: 0,
             Menores: 0,
-            Estado:'P'
+            Estado:'P',
+            Telefono:''
           });
           this.modalService.dismissAll();
 
@@ -231,9 +252,10 @@ export class InvitacionesComponent {
     
   }
 
-  GetLinkInvitacion(id:any) {
-    let link = 'http://localhost:4200/home/'+ id;
-    this.clipboard.copy(link);
+  GetLinkInvitacion(id:any, telefono:any) {
+    let link = this.Evento.mensajeInvitacion === '' ? 'https://boda-mynor-y-bernarda.solutionsjw.com/?id='+ id :  this.Evento.mensajeInvitacion.replace(':link:', 'https://boda-mynor-y-bernarda.solutionsjw.com/?id='+ id) ;
+    const url = telefono === '' || telefono === undefined ?`https://wa.me/?text=${encodeURIComponent(link)}`:`https://wa.me/502${telefono}?text=${encodeURIComponent(link)}`;
+    this.clipboard.copy(url);
     this._snackBar.openFromComponent(Alerta, {
       data: `Link ${link} copiado al portapapeles.`,
       duration: this.durationInSeconds * 1000,
@@ -250,10 +272,12 @@ export class InvitacionesComponent {
   }
 
   editarInvitacion(id: number): void {
+    this.isLoading = true;
     this.GetInvitacionPorId(this.invitados$, id).subscribe((element) => {
       this.invitacionXEditar = element as Invitacion;
       const modal = new Modal('#editModal');
       modal.show();
+      this.isLoading = false;
     });
     
   }
@@ -284,5 +308,11 @@ export class InvitacionesComponent {
           
         }
       });
+  }
+
+  CerrarModal(){
+    const modalElement = document.getElementById('editModal');
+    const modal = Modal.getInstance(modalElement!) || new Modal(modalElement!);
+    modal.hide(); // Cierra el modal aquí
   }
 }

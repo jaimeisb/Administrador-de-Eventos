@@ -9,7 +9,7 @@ export class AuthService {
   login(username: string, password: string): boolean {
     // Aquí puedes implementar la lógica de autenticación, como una llamada a un API
     // Si la autenticación es exitosa, almacena el estado
-    if (username === 'user' && password === '123') { // Ejemplo
+    if ((username === 'admin' && password === '@dm1n') || ((username === 'mynor' || username === 'bernarda') && password === '20241214')) { // Ejemplo
       this.isAuthenticated = true;
       return true;
     }
