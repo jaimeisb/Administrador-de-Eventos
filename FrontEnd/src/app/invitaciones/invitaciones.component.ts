@@ -1,15 +1,19 @@
 import { Component, inject, TemplateRef } from '@angular/core';
 import { AsyncPipe, CommonModule, DecimalPipe } from '@angular/common';
+import { Component, inject, TemplateRef } from '@angular/core';
+import { AsyncPipe, CommonModule, DecimalPipe } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { ModalDismissReasons, NgbDatepickerModule, NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 import { Observable } from 'rxjs';
 import { finalize, map, startWith, switchMap } from 'rxjs/operators';
+import { finalize, map, startWith, switchMap } from 'rxjs/operators';
 import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
 import { InvitacionService } from '../../Servicios/invitacion.service';
 
 import { HttpClientModule } from '@angular/common/http';
+import { Evento, Invitacion } from '../../Modelos/invitacion';
 import { Evento, Invitacion } from '../../Modelos/invitacion';
 import { Clipboard,ClipboardModule  } from '@angular/cdk/clipboard';
 
@@ -20,6 +24,7 @@ import { Alerta } from '../Alertas/Alerta.component';
 import { EstadoDescriptivoPipe } from '../../Modelos/estado-descriptivo.pipe';
 import { Modal } from 'bootstrap';
 import { EventoService } from '../../Servicios/evento.service';
+import { EventoService } from '../../Servicios/evento.service';
 
 
 
@@ -27,8 +32,10 @@ import { EventoService } from '../../Servicios/evento.service';
   selector: 'app-invitaciones',
   standalone: true,
   imports: [FormsModule, CommonModule, MatCardModule, DecimalPipe, AsyncPipe, ReactiveFormsModule, NgbHighlight, NgbDatepickerModule, HttpClientModule, NgbTooltipModule, ClipboardModule, EstadoDescriptivoPipe ],
+  imports: [FormsModule, CommonModule, MatCardModule, DecimalPipe, AsyncPipe, ReactiveFormsModule, NgbHighlight, NgbDatepickerModule, HttpClientModule, NgbTooltipModule, ClipboardModule, EstadoDescriptivoPipe ],
   templateUrl: './invitaciones.component.html',
   styleUrl: './invitaciones.component.css',
+	providers: [DecimalPipe, InvitacionService, EventoService],
 	providers: [DecimalPipe, InvitacionService, EventoService],
 })
 
@@ -52,7 +59,12 @@ export class InvitacionesComponent {
   invitacionXEditar:Invitacion;
   isLoading: boolean = false; // Controla la visibilidad del spinner
   Evento:Evento;
+  isLoading: boolean = false; // Controla la visibilidad del spinner
+  Evento:Evento;
 
+	constructor(private invitacionService: InvitacionService,private fb: FormBuilder, private clipboard: Clipboard, private eventoService: EventoService) {
+    this.Evento = {correo:'',anfitrion:'',fecha:'',idEvento:0,mensajeInvitacion:''}
+    this.invitacionXEditar={idInvitacion:0, adultos:0, estado:'',fechaExpiracion:new Date,idEvento:0,menores:0,nombre:'',invitacionConfirmacion: null,telefono:'' }
 	constructor(private invitacionService: InvitacionService,private fb: FormBuilder, private clipboard: Clipboard, private eventoService: EventoService) {
     this.Evento = {correo:'',anfitrion:'',fecha:'',idEvento:0,mensajeInvitacion:''}
     this.invitacionXEditar={idInvitacion:0, adultos:0, estado:'',fechaExpiracion:new Date,idEvento:0,menores:0,nombre:'',invitacionConfirmacion: null,telefono:'' }
@@ -69,6 +81,20 @@ export class InvitacionesComponent {
       FechaExpiracion: [''],
       Adultos: [0, [Validators.required, Validators.min(1)]],
       Menores: [0],
+      Estado:['P'],
+      Telefono:['']
+    });
+
+    this.eventoService.getEvento(2).subscribe({
+      next: (data) => {
+        console.log(data);
+        // Puedes realizar alguna transformación aquí si es necesario
+        this.Evento = data;
+      },
+      complete: () => {
+        // Acciones cuando la suscripción se completa
+        this.isLoading = false; 
+      }
       Estado:['P'],
       Telefono:['']
     });
@@ -125,6 +151,7 @@ export class InvitacionesComponent {
   // Método para obtener las invitaciones desde la API
   getInvitaciones(): void {
     this.isLoading = true; // Mostrar el spinner
+    this.isLoading = true; // Mostrar el spinner
     this.invitados$ = this.invitacionService.getInvitaciones(2).pipe(
       map((data) => {
         
@@ -136,6 +163,8 @@ export class InvitacionesComponent {
         console.log(data);
         // Puedes realizar alguna transformación aquí si es necesario
         return data;
+      }),finalize(() => {
+        this.isLoading = false; // Ocultar el spinner al completar la carga
       }),finalize(() => {
         this.isLoading = false; // Ocultar el spinner al completar la carga
       })
@@ -160,6 +189,8 @@ export class InvitacionesComponent {
             FechaExpiracion: this.getFechaLocal(),
             Adultos: 0,
             Menores: 0,
+            Estado:'P',
+            Telefono:''
             Estado:'P',
             Telefono:''
           });
@@ -274,10 +305,12 @@ export class InvitacionesComponent {
 
   editarInvitacion(id: number): void {
     this.isLoading = true;
+    this.isLoading = true;
     this.GetInvitacionPorId(this.invitados$, id).subscribe((element) => {
       this.invitacionXEditar = element as Invitacion;
       const modal = new Modal('#editModal');
       modal.show();
+      this.isLoading = false;
       this.isLoading = false;
     });
     
@@ -309,6 +342,12 @@ export class InvitacionesComponent {
           
         }
       });
+  }
+
+  CerrarModal(){
+    const modalElement = document.getElementById('editModal');
+    const modal = Modal.getInstance(modalElement!) || new Modal(modalElement!);
+    modal.hide(); // Cierra el modal aquí
   }
 
   CerrarModal(){

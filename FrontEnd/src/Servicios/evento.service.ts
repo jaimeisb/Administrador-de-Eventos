@@ -21,6 +21,7 @@ export class EventoService {
      // Método para obtener un evento por ID
      AddCorreoEvento(id: number, evento:Evento): Observable<void> {
         console.log(evento);
+        console.log(evento);
         const url = `${this.apiUrl}/${id}`;
         return this.http.put<void>(url, evento, {
             headers: new HttpHeaders({

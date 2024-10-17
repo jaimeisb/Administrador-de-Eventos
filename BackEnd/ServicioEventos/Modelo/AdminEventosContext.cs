@@ -76,6 +76,10 @@ public partial class AdminEventosContext : DbContext
                 .HasMaxLength(25)
                 .IsUnicode(false)
                 .HasColumnName("TELEFONO");
+            entity.Property(e => e.Telefono)
+                .HasMaxLength(25)
+                .IsUnicode(false)
+                .HasColumnName("TELEFONO");
 
             entity.HasOne(d => d.IdEventoNavigation).WithMany(p => p.Invitacions)
                 .HasForeignKey(d => d.IdEvento)
