@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using ServicioEventos.Modelo;
 using System.Net;
 using System.Net.Mail;
@@ -45,6 +46,54 @@ namespace ServicioEventos.Controllers
             return CreatedAtAction(nameof(GetInvitacion), new { id = nuevaInvitacion.IdInvitacion }, nuevaInvitacion);
         }
 
+        [HttpPost("{id}/enviarcorreo")]
+        public IActionResult EnviarCorreo(int id)
+        {
+            try
+            {
+                var invitacion =  _context.Invitacions.AsNoTracking().FirstOrDefault(i => i.IdInvitacion == id);
+                var evento = _context.Eventos.FirstOrDefault(x => x.IdEvento == invitacion.IdEvento);
+                var confirmacion = _context.InvitacionConfirmacions.FirstOrDefault(x => x.IdInvitacion == id);
+                if (evento != null && !string.IsNullOrEmpty(evento.Correo) && confirmacion!=null)
+                {
+                    string destinatario = evento.Correo;  // Asegúrate de tener el email del invitado
+                    string asunto = "Confirmación de Invitación";
+                    string cuerpo = $"<p>Hola,</p> <p>La invitación enviada a \"{invitacion.Nombre}\", ha sido confirmada exitosamente.</p> <p>Personas confirmadas: {confirmacion.AdultosConfirmados} adultos, {confirmacion.MenoresConfirmados} niños. </p>";
+                    MailMessage message = new MailMessage();
+                    message.From = new MailAddress("admin@solutionsjw.com");
+
+                    message.To.Add(new MailAddress(evento.Correo));
+
+                    message.Subject = asunto;
+                    message.Body = cuerpo;
+                    message.IsBodyHtml = true;
+                    var smtpClient = new SmtpClient("relay-hosting.secureserver.net")
+                    {
+                        Port = 25,  // Sin SSL
+                        DeliveryMethod = SmtpDeliveryMethod.Network,
+                        UseDefaultCredentials = false,  // No necesita autenticación
+                        Credentials = new NetworkCredential("admin@solutionsjw.com", "Ismael_1994*"),
+
+                    };
+
+                    smtpClient.Send(message);
+                }
+                else
+                {
+                    return Ok("Nada por enviar");
+                }
+            }
+            catch (SmtpException smtpEx)
+            {
+                Console.WriteLine($"Error SMTP: {smtpEx.Message}");
+                return StatusCode(500, $"Error SMTP: {smtpEx.Message}");
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, $"Error al enviar correo :s1 : {e.Message}");
+            }
+            return Ok("Correo enviado");
+        }
         [HttpPost("{id}/confirmar")]
         public async Task<IActionResult> ConfirmarInvitacion(int id, [FromBody] InvitacionConfirmacion confirmacion)
         {
@@ -69,16 +118,17 @@ namespace ServicioEventos.Controllers
             {
                 string destinatario = evento.Correo;  // Asegúrate de tener el email del invitado
                 string asunto = "Confirmación de Invitación";
-                string cuerpo = $"<p>Hola,</p> <p>Tu invitación para {invitacion.Nombre} ha sido confirmada exitosamente.</p> <br> <p>Personas confirmadas: {confirmacion.AdultosConfirmados} adultos, {confirmacion.MenoresConfirmados} niños. </p>";
+                string cuerpo = $"<p>Hola,</p> <p>La invitación enviada a {invitacion.Nombre}, ha sido confirmada exitosamente.</p> <br> <p>Personas confirmadas: {confirmacion.AdultosConfirmados} adultos, {confirmacion.MenoresConfirmados} niños. </p>";
 
                 try
                 {
-                    await EnviarCorreoAsync(destinatario, asunto, cuerpo);
+                     EnviarCorreoAsync(destinatario, asunto, cuerpo);
                 }
                 catch (Exception ex)
                 {
                     // Manejo de errores de envío de correo
                     //return StatusCode(500, $"Error al enviar correo: {ex.Message}");
+                    //Console.WriteLine($"Error al enviar correo: {ex.Message}");
                 }
             }
 
@@ -86,25 +136,27 @@ namespace ServicioEventos.Controllers
         }
 
 
-        private async Task EnviarCorreoAsync(string destinatario, string asunto, string cuerpo)
+        private  void EnviarCorreoAsync(string destinatario, string asunto, string cuerpo)
         {
-            var smtpClient = new SmtpClient("smtp.gmail.com")
+            MailMessage message = new MailMessage();
+            message.From = new MailAddress("admin@solutionsjw.com");
+
+            message.To.Add(new MailAddress(destinatario));
+
+            message.Subject = asunto;
+            message.Body = cuerpo;
+            message.IsBodyHtml = true;
+
+            var smtpClient = new SmtpClient("relay-hosting.secureserver.net")
             {
-                Port = 587,
-                Credentials = new NetworkCredential("soporte.jwsolutions@gmail.com", "xcdamfwjgwrsfnlw"),
-                EnableSsl = true,
+                Port = 25,  // Sin SSL
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,  // No necesita autenticación
+                Credentials = new NetworkCredential("admin@solutionsjw.com", "Ismael_1994*"),
+
             };
 
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress("soporte.jwsolutions@gmail.com"),
-                Subject = asunto,
-                Body = cuerpo,
-                IsBodyHtml = true, // Si el cuerpo contiene HTML
-            };
-            mailMessage.To.Add(destinatario);
-
-            await smtpClient.SendMailAsync(mailMessage);
+            smtpClient.Send(message);
         }
 
         [HttpDelete("{id}")]

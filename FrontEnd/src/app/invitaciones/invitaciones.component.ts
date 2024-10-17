@@ -254,6 +254,7 @@ export class InvitacionesComponent {
 
   GetLinkInvitacion(id:any, telefono:any) {
     let link = this.Evento.mensajeInvitacion === '' ? 'https://boda-mynor-y-bernarda.solutionsjw.com/?id='+ id :  this.Evento.mensajeInvitacion.replace(':link:', 'https://boda-mynor-y-bernarda.solutionsjw.com/?id='+ id) ;
+    //let link = this.Evento.mensajeInvitacion === '' ? 'http://localhost:4200/?id='+ id :  this.Evento.mensajeInvitacion.replace(':link:', 'http://localhost:4200/?id='+ id) ;
     const url = telefono === '' || telefono === undefined ?`https://wa.me/?text=${encodeURIComponent(link)}`:`https://wa.me/502${telefono}?text=${encodeURIComponent(link)}`;
     this.clipboard.copy(url);
     this._snackBar.openFromComponent(Alerta, {

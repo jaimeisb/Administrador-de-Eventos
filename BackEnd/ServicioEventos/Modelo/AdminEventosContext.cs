@@ -23,8 +23,8 @@ public partial class AdminEventosContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=108.181.197.190,19018;Database=AdminEventos;User Id=admin;Password=2PDYZYRbxasib1HODY6U;MultipleActiveResultSets=true;TrustServerCertificate=True");
-    //data source = 108.181.197.190,19018; initial catalog = ATN_BIOSKA; user id = admin; password=2PDYZYRbxasib1HODY6U;MultipleActiveResultSets=True;
+        => optionsBuilder.UseSqlServer("cadena");
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Evento>(entity =>

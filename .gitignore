@@ -38,10 +38,25 @@ bower_components
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
+# Secretos y credenciales
+secrets.json
+*.key
+*.pfx
+
+# Certificados
+*.cer
+*.crt
+*.pem
+
 # Dependency directories
 node_modules/
 docs/
 jspm_packages/
+bin/
+obj/
+.vs/
+.config/
+packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/

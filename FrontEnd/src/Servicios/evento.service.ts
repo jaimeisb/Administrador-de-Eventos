@@ -8,8 +8,8 @@ import { Evento } from '../Modelos/invitacion';
   providedIn: 'root'
 })
 export class EventoService {
-    private apiUrl = 'https://apiadmineventos.solutionsjw.com/api/Evento';  // URL base de la API
-    //private apiUrl = 'https://localhost:7080/api/Evento';  
+    //private apiUrl = 'https://apiadmineventos.solutionsjw.com/api/Evento';  // URL base de la API
+    private apiUrl = 'https://localhost:7080/api/Evento';  
     constructor(private http: HttpClient) { }
 
     // Método para obtener un evento por ID
